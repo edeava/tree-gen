@@ -26,7 +26,7 @@ class DualCellularAutomata:
                     total += 1
         return total
 
-    def update(self, frame):
+    def update(self):
         self.ax.clear()
         self.ax.set_xticks([])
         self.ax.set_yticks([])

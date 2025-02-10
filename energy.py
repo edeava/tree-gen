@@ -10,7 +10,7 @@ class EnergyCellularAutomata:
         print(self.grid.shape)
         self.grid = np.concatenate((self.grid, np.random.choice([0, 1], size=(size // 7, size), p=[0.7, 0.3])))
         print(self.grid.shape)
-        self.grid = np.concatenate((self.grid, np.zeros((size // 7 + 5, size))))
+        self.grid = np.concatenate((self.grid, np.zeros((size - (6 * (size// 7)), size))))
         self.grid = self.grid.T
         print(self.grid.shape)
         self.energy = np.zeros((size, size))
@@ -73,16 +73,16 @@ class EnergyCellularAutomata:
                 else:
                     color_array[i, j] = self.cmap(norm_energy[i, j])[:3]  # Green gradient
         
-        return color_array
+        return color_array * 255
 
-    def update(self, frame):
-        self.ax.clear()
+    def update(self):
+        # self.ax.clear()
         self.add_environmental_energy()
         
         # Display current state with energy-based colors
-        self.ax.imshow(self.get_color_array())
-        self.ax.set_xticks([])
-        self.ax.set_yticks([])
+        # self.ax.imshow(self.get_color_array())
+        # self.ax.set_xticks([])
+        # self.ax.set_yticks([])
         
         new_grid = self.grid.copy()
         new_energy = self.energy.copy()
@@ -124,5 +124,5 @@ class EnergyCellularAutomata:
         plt.show()
 
 # Create and run the simulation
-game = EnergyCellularAutomata()
-game.animate()
+# game = EnergyCellularAutomata()
+# game.animate()
