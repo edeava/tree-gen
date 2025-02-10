@@ -6,9 +6,15 @@ import matplotlib.colors as mcolors
 class EnergyCellularAutomata:
     def __init__(self, size=180):
         # 0 = empty, 1 = living cell
-        self.grid = np.random.choice([0, 1], size=(size, size), p=[0.8, 0.2])
+        self.grid = np.zeros((5 * (size // 7), size))
+        print(self.grid.shape)
+        self.grid = np.concatenate((self.grid, np.random.choice([0, 1], size=(size // 7, size), p=[0.7, 0.3])))
+        print(self.grid.shape)
+        self.grid = np.concatenate((self.grid, np.zeros((size // 7 + 5, size))))
+        self.grid = self.grid.T
+        print(self.grid.shape)
         self.energy = np.zeros((size, size))
-        self.energy[self.grid > 0] = 100
+        self.energy[self.grid > 0] = np.random.randint(low=33, high=100)
         self.age = np.zeros((size, size))
         
         self.fig, self.ax = plt.subplots(figsize=(10, 10))
@@ -19,16 +25,16 @@ class EnergyCellularAutomata:
         
         # Parameters
         self.energy_decay = 0.1
-        self.min_survival_energy = 44
-        self.reproduction_energy = 96
+        self.min_survival_energy = 20
+        self.reproduction_energy = 50
         self.energy_transfer_rate = 0.2
-        self.sunlight_energy = 8
-        self.death_age = 10000
+        self.sunlight_energy = 1
+        self.death_age = 100
         
     def add_environmental_energy(self):
         height_factor = 0.6 + 0.4 * (1 - np.abs(np.linspace(-1, 1, self.grid.shape[0])))
         height_factor = height_factor[:, np.newaxis]
-        self.energy += self.sunlight_energy * height_factor * (self.grid > 0)
+        self.energy = self.sunlight_energy * (self.energy + height_factor * (self.grid > 0))
         
     def transfer_energy(self, i, j):
         if self.grid[i, j] == 0:
@@ -86,7 +92,7 @@ class EnergyCellularAutomata:
                 if self.grid[i, j] > 0:
                     self.transfer_energy(i, j)
                     new_energy[i, j] -= self.energy_decay
-                    self.age[i,j] = self.age[i,j] + 1
+                    self.age[i,j] += 1
                     
                     if new_energy[i, j] < self.min_survival_energy:
                         new_grid[i, j] = 0
@@ -107,10 +113,11 @@ class EnergyCellularAutomata:
                                     break
                     if self.age[i,j] > self.death_age :
                         new_energy[i,j] = 0
+                        new_grid[i,j] = 0
+                        self.age[i,j] = 0
                             
         self.grid = new_grid
         self.energy = new_energy
-        self.age = self.age + 1
 
     def animate(self):
         anim = FuncAnimation(self.fig, self.update, frames=200, interval=100)
