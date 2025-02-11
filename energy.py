@@ -7,34 +7,51 @@ class EnergyCellularAutomata:
     def __init__(self, size=180):
         # 0 = empty, 1 = living cell
         self.grid = np.zeros((5 * (size // 7), size))
-        print(self.grid.shape)
+
         self.grid = np.concatenate((self.grid, np.random.choice([0, 1], size=(size // 7, size), p=[0.7, 0.3])))
-        print(self.grid.shape)
+
         self.grid = np.concatenate((self.grid, np.zeros((size - (6 * (size// 7)), size))))
+        
+        # self.grid = np.zeros((size, size))
+
         self.grid = self.grid.T
-        print(self.grid.shape)
+
         self.energy = np.zeros((size, size))
         self.energy[self.grid > 0] = np.random.randint(low=33, high=100)
         self.age = np.zeros((size, size))
         
-        self.fig, self.ax = plt.subplots(figsize=(10, 10))
+        self.clouds = np.zeros((size, size))
+        random_centers = np.random.random_sample(size=(5,2)) * size
+        random_centers = random_centers.astype(int, copy=True)
+        print(random_centers)
         
+        for i in range(self.grid.shape[0]):
+            for j in range(self.grid.shape[1]):
+                max_sun = 0
+                for k in range(random_centers.shape[0]):
+                    distance = int((i - random_centers[k][0]) * (i - random_centers[k][0]) +
+                                       (j - random_centers[k][1]) * (j - random_centers[k][1]))
+                    norm_distance = np.clip(1 - (distance / (size*size)) , 0, 1)
+                    max_sun = np.maximum(max_sun, norm_distance)
+                self.clouds[i][j] = max_sun
+
         # Create custom colormap: White -> Green -> Black
         self.colors = [(1,1,1), (0.2,0.8,0.2), (0,0.3,0)]
         self.cmap = mcolors.LinearSegmentedColormap.from_list('energy', self.colors)
         
         # Parameters
         self.energy_decay = 0.1
-        self.min_survival_energy = 20
-        self.reproduction_energy = 50
-        self.energy_transfer_rate = 0.2
-        self.sunlight_energy = 1
-        self.death_age = 100
+        self.min_survival_energy = 12
+        self.reproduction_energy = 25
+        self.energy_transfer_rate = 0.125
+        self.sunlight_energy = 1.3
+        self.death_age = 50
         
     def add_environmental_energy(self):
-        height_factor = 0.6 + 0.4 * (1 - np.abs(np.linspace(-1, 1, self.grid.shape[0])))
-        height_factor = height_factor[:, np.newaxis]
-        self.energy = self.sunlight_energy * (self.energy + height_factor * (self.grid > 0))
+        # height_factor = 1.1 - np.abs(np.geomspace(0.1, 1.1, self.grid.shape[0]))
+        # height_factor = height_factor[:, np.newaxis]
+        # print(height_factor)
+        self.energy = self.sunlight_energy * self.clouds * (self.energy)
         
     def transfer_energy(self, i, j):
         if self.grid[i, j] == 0:
@@ -51,7 +68,7 @@ class EnergyCellularAutomata:
                 if self.grid[ni, nj] > 0:
                     energy_diff = self.energy[i, j] - self.energy[ni, nj]
                     if energy_diff > 0:
-                        transfer = energy_diff * self.energy_transfer_rate
+                        transfer = self.energy_transfer_rate
                         self.energy[i, j] -= transfer
                         self.energy[ni, nj] += transfer
                         total_transfer += transfer
