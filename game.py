@@ -36,6 +36,7 @@ def draw_from_colors(colorArray):
 # Game loop
 running = True
 start = True
+space = 0
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -43,7 +44,6 @@ while running:
         
         # Add mouse interaction to toggle cells
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            start = False
             pos = pygame.mouse.get_pos()
             print(pos[1] // CELL_SIZE, pos[0] // CELL_SIZE)
             for i in range(-10, 10):
@@ -52,13 +52,21 @@ while running:
                     row = (pos[0] + j) // CELL_SIZE
                     game.grid[row, col] = not game.grid[row, col]
                     game.energy[row, col] = 80 * game.grid[row, col]
-        elif event.type == pygame.MOUSEBUTTONUP:
-            start = True
+        elif event.type == pygame.KEYDOWN:
+            start = not start
+            space += 1 
+            print('PAUSED')
+            # print(game.random_centers)
     if start:
         game.update()
+    if space > 0 and not start:
+        space = space % 9
+        curr_game_center = game.random_centers[space]
+        draw_from_colors(game.get_color_array(add_point = curr_game_center))
+    else:
+        draw_from_colors(game.get_color_array())
     
-    draw_from_colors(game.get_color_array())
     pygame.display.flip()
-    pygame.time.wait(10)  # Control animation speed
+    pygame.time.wait(1)  # Control animation speed
 
 pygame.quit()
