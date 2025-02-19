@@ -11,7 +11,7 @@ class EnergyCellularAutomata:
         # self.grid = np.concatenate((self.grid, np.random.choice([0, 1], size=(size // 7, size), p=[0.7, 0.3])))
 
         # self.grid = np.concatenate((self.grid, np.zeros((size - (6 * (size// 7)), size))))
-        
+        self.size = size
         self.grid = np.zeros((size, size))
 
         self.grid = self.grid.T
@@ -26,15 +26,7 @@ class EnergyCellularAutomata:
         self.random_centers = self.random_centers.astype(int, copy=True)
         print(self.random_centers)
         
-        for i in range(self.grid.shape[0]):
-            for j in range(self.grid.shape[1]):
-                max_sun = 0
-                for k in range(self.random_centers.shape[0]):
-                    distance = int((i - self.random_centers[k][0]) * (i - self.random_centers[k][0]) +
-                                       (j - self.random_centers[k][1]) * (j - self.random_centers[k][1]))
-                    norm_distance = np.clip(1 - (distance / (size**1.4)) , 0, 1)
-                    max_sun = np.maximum(max_sun, norm_distance)
-                self.clouds[i][j] = max_sun
+        self.update_clouds()
 
         # Create custom colormap: White -> Green -> Black
         self.colors = [(0,0,0), (0,1,0)]
@@ -46,7 +38,7 @@ class EnergyCellularAutomata:
         self.reproduction_energy = 80
         self.energy_transfer_rate = 0.01
         self.sunlight_energy = 1
-        self.death_age = 75
+        self.death_age = 250
         
     def add_environmental_energy(self):
         # height_factor = 1.1 - np.abs(np.geomspace(0.1, 1.1, self.grid.shape[0]))
@@ -54,6 +46,32 @@ class EnergyCellularAutomata:
         # print(height_factor)
         self.energy = self.sunlight_energy * self.clouds + (self.energy)
         
+    def update_clouds(self):
+        self.clouds = np.zeros((self.size, self.size))
+        for i in range(self.grid.shape[0]):
+            for j in range(self.grid.shape[1]):
+                max_sun = 0
+                for k in range(self.random_centers.shape[0]):
+                    distance = int((i - self.random_centers[k][0]) * (i - self.random_centers[k][0]) +
+                                       (j - self.random_centers[k][1]) * (j - self.random_centers[k][1]))
+                    norm_distance = np.clip(1 - (distance / (self.size**1.4)) , 0, 1)
+                    max_sun = np.maximum(max_sun, norm_distance)
+                self.clouds[i][j] = max_sun
+        
+    def move_center_x(self, delta, index):
+        self.random_centers[index][0] = (self.random_centers[index][0] + delta) % self.size
+        self.update_clouds()
+        
+    def move_center_y(self, delta, index):
+        self.random_centers[index][1] = (self.random_centers[index][1] + delta) % self.size
+        self.update_clouds()
+     
+    def move_center(self, delta, index, axis="x"):
+        if axis == "y":
+            self.move_center_y(delta=delta, index=index) 
+        else:
+            self.move_center_x(delta=delta, index=index)
+    
     def transfer_energy(self, i, j):
         if self.grid[i, j] == 0:
             return 0
@@ -145,6 +163,7 @@ class EnergyCellularAutomata:
     def animate(self):
         anim = FuncAnimation(self.fig, self.update, frames=200, interval=100)
         plt.show()
+        
 
 # Create and run the simulation
 # game = EnergyCellularAutomata()
